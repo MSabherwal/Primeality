@@ -18,6 +18,4 @@ Notes
 
 • Write tests. Try to demonstrate TDD/BDD.
 
-When you’re done
-
-Put your code on GitHub or email us a zip/tarball.
+When you’re done, Put your code on GitHub or email us a zip/tarball.
