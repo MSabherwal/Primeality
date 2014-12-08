@@ -41,3 +41,12 @@ Determining performance:
 
 * The speed of graphing is dominated by the multiplication of the rows and columns, which take
 	polynomial time, or x*y, which means polynomial time ( O(n**2) ) 
+
+------------------------------------------------------------------------------------------------
+Running the script
+
+$ruby prime_table.rb
+	Comman line options :
+		-h --help   Shows all the command line options
+		-r --rows   Number of rows
+		-c --col    Number of columns
