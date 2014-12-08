@@ -1,58 +1,92 @@
 
 module Primes
 
-	def self.primes_table(n)
-		prime_ary = self.find_primes(n)
-		puts self.create_table(prime_ary,n)
-	end
 
-	def self.find_primes(n)
-		# Input check for validity
-		return [] if n <=1 
 
-		#  create an array of n+1 values, all bool (n+1 to account for 0)
+	#erathosthenes yields primes up to era_max = 1e5 using a modified sieve of Erathosthenes 
+	def self.erathosthenes()
+
+		return enum_for(:erathosthenes) unless block_given?
+
+		#picked arbitrarily large value to find primes with..
+		era_max = 1e5.to_i #constant time
+
+
+		#  create an array of 1e5+1 values, all bool (+1 to account for 0)
 		#  set  index 0 & 1 = false
-		ary = [false,false]+[true]*(n-1)
+		ary = [nil,nil]+[true]*(era_max-1) #constant time
 		
 		# determine prime from 2 to sqrt(n)
 		#  (Due to mirroring of multiples)
-		(2..Math.sqrt(n).ceil).each do |int|
-			#skip 0 and 1
-			next if ary[int] == false
+		(2..era_max).each do |int| #time n
+			#skip if false (don't think this will occur, just being safe)
+			next if ary[int] == nil
+			
 			
 			#Assuming all previous multiple have been found, can start at
-			# int**2
-			(int**2..n).step(int).each do |x|
-				ary[x] = false
+			# int**2. RUNTIME : http://en.wikipedia.org/wiki/Divergence_of_the_sum_of_the_reciprocals_of_the_primes
+							#  implies the sum of primes is loglogn
+			(int**2..era_max).step(int).each do |x|
+				ary[x] = nil
 			end
+			yield int
 		end
-		#aggregate results
-		final = []
-		ary.each.with_index do|val, index|
-			final.push(index) if val == true
-		end
-		return final
+		
 	end
 
-	def self.create_table(ary,n)
-		
-		table = ''
-		#returns the size of the largest row (= largest_num + 2 space buffer)
-		size = ary[-1].to_s.length+2
-		#get total horizontal space of table, so header can cover
-		tab_len = (size+2)*9
+	# THe run time of erathosthenes is n*loglogn
 
-		table += "_"*tab_len+"\n\n"+"Primes up to #{n}".center(tab_len)+"\n"+"_"*tab_len+"\n\n"
-		
-		while ary.empty? == false
-			row = '|'
-			hold = ary.shift(10)
-			hold.each do |int|
-				# print each in in a cell, and concat str
-				row += int.to_s.center(size)+"|"
-			end
-			table +=row+"\n"
+	class PrimeMultiplicationTable
+		def initialize(config)
+			opts = {
+				:header_column => 10,
+				:header_row    => 10,
+			}.merge(config)
+
+			@header_row     = Primes.erathosthenes.take(opts[:header_row])    #tells the # of columns
+			@header_column  = Primes.erathosthenes.take(opts[:header_column]) #tells the # of rows
+
+			@table = @header_column.reduce([]){|table,col|
+				table.push( @header_row.map{|row| col*row})
+			}
+
+			#cell width will be vertically aligned, so that each column is uniform, each row is dynamic
+			@cell_width = @table.transpose.reduce([]) {|cw,row|
+				cw << row.max.to_s.length+2 #add 2 for space between '|' and int
+			}
 		end
-		return table
+
+		attr_reader :table, :header_row, :header_column, :cell_width
+
+		def to_s
+			top = header
+			return table.reduce(header) { |output,row|
+				output += table_row(row,true)+"\n"
+			}
+		end
+
+		private
+
+		# table_row returns the string representation of the row given
+		def table_row(row,blank_first)
+			str = ( blank_first ? (row[0]/2).to_s.center(3) : "   ")+"|"
+			row.each_with_index { |int,index|
+				str+= int.to_s.center(@cell_width[index])+'|'
+			}
+			return str
+		end
+
+
+
+		def header
+			table_width = @cell_width.reduce{|tw,val|
+				tw+=val+2
+			}
+			blocks = '_'*table_width
+			mid_blocks = '-'*table_width
+			return blocks+ "\n\n" +"#{@header_column.length} x #{@header_row.length} Prime Multiplication Table".center(table_width+3)+"\n"+table_row(@header_row,false)+"\n"+mid_blocks+"\n"
+		end
+
 	end
 end
+
